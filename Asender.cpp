@@ -18,14 +18,12 @@ int main(){
 setup_serial();
 
 /* sender */
-int i = 0, framesend;
-char ack, tmp[100] = {"C:/TC/BIN/"};
+int i = 0, framesend = 0;
+char ack;
 char addrFILE[100] , frame[framelen] = {0};
-
+int end = 0;
 printf("enter file name : ");
 gets(addrFILE);
-strcat(tmp, addrFILE);
-strcpy(addrFILE, tmp);
 
 FILE *ptraddr;
 ptraddr = fopen(addrFILE, "r");
@@ -47,15 +45,16 @@ send_character('\0');
 
 while(1){
     printf("enter frame : ");
-    scanf("%d", &framesend);
+    printf("%d\n", framesend);
     i = 0;
     /* read file */
     do{
-        frame[i++] = fgetc(ptraddr);
-        if (frame[i-1] == EOF){
-            frame[i-1] = '\0';
+        frame[i] = fgetc(ptraddr);
+        if(frame[i] == EOF){
+            frame[i] = 6;
             break;
         }
+        i++;
     }while(i < framelen);
 
     do{
@@ -71,20 +70,25 @@ while(1){
         send_character('\0');
 
         /* recieve ack */
+        print("Timeout : ");
         ack = getch();
         printf("%c\n", ack);
-
         if(ack != 't'){
-            printf("Timeout : \n");
             printf("recieve ACK%d\n\n", framesend+1);
         }
         else {
-            printf("Timeout : t\n");
-            printf("Retransmi frame %d\n", framesend);
+            printf("Retransmit frame %d\n", framesend);
+        }
+
+        if(get_character() == 6){
+            printf("send complete");
+            getch();
+            return 0;
         }
     }while(ack == 't');
+    framesend ^= 1;
 }
-return 0;
+
 }
 
 void setup_serial(){

@@ -7,7 +7,7 @@
 #include<dos.h>
 #include<stdio.h>
 #include<string.h>
-#define framelen 8
+#define framelen 10
 
 void setup_serial();
 void send_character(char ch);
@@ -18,68 +18,80 @@ int main(){
 setup_serial();
 
 /* reciever */
-int i = 0, framecount = 0, waitframe = 0;
+int i = 0, waitframe = 0, mode = 0;
 char saveFILE[100], recieveFileName[255], frameRecieve[framelen] = {0};
 char ack;
+int eof = 0;
 FILE *ptrSave;
 
 /* get file name */
+printf("sender send : ");
 do{
     recieveFileName[i] = get_character();
     i++;
 }while(recieveFileName[i-1] != '\0');
 i = 0;
-printf("sender send : %s\n", recieveFileName);
+printf("%s\n", recieveFileName);
 
 printf("Save as : ");
 gets(saveFILE);
+printf("Wait for data...\n\n");
 
 while(1){
-
-    /* recieve frame number */
-    framecount = (int)(get_character());
-    printf("recieve frame : %d\n", framecount);
 
     /* recieve data */
 	i = 0;
 	do{
 		frameRecieve[i] = get_character();
+		if(frameRecieve[i] == 6){
+			mode = 1;
+		}
 		i++;
 	}while(frameRecieve[i-1] != '\0');
-	printf("data : %s\n", frameRecieve);
-	
+
+	printf("frame recieve : ");
+	printf("%d",(int)frameRecieve[0]);
+	printf("data : ");
+	for(i = 1; i < framelen; i++){
+		printf("%c", frameRecieve[i]);
+	}
+	printf("\n");
+
 	/* action frame part */
-	printf("Actin frame : ");
+	printf("Action frame : ");
 	ack = getch();
 	printf("%c\n", ack);
-	
-	if(waitframe == framecount){
-		waitframe += 1;
+
+	if(waitframe == (int)frameRecieve[0]){
 		printf("Recieve & ");
+		waitframe ^= 1;
 		// save data to file
 		ptrSave = fopen(saveFILE,"a");
-		fprintf(ptrSave, "%s", frameRecieve);
+		for(i = 1;i < framelen; i++){
+			fprintf(ptrSave, "%c", frameRecieve[i]);
+		}
 		fclose(ptrSave);
 	}
 	else{
 		printf("Reject & ");
 	}
-
+	
 	if(ack == 'a'){
-		printf("send ACK%d\n",waitframe);
+		printf("send ACK%d\n\n",waitframe);
 	}
 	else{
 		printf("sleep\n");
 	}
-	
 
-	/* clear frameRecieve */
-	for(i = 0; i < strlen(frameRecieve); i++){
-		frameRecieve[i] = '\0';
+	if(mode == 1){
+		send_character(6);
+		return 0;
+	}
+	else {
+		send_character('\0');
 	}
 }
 
-return 0;
 }
 
 void setup_serial(){

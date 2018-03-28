@@ -66,6 +66,9 @@ while(1){
         /* frame send size = 8 */
         for(i = 0; i < framelen; i++){
             send_character(frame[i]);
+            if(framesend[i] == 6){
+                break;
+            }
         }
         send_character('\0');
 

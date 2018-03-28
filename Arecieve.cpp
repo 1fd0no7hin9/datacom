@@ -42,17 +42,18 @@ while(1){
     /* recieve data */
 	i = 0;
 	do{
-		frameRecieve[i] = get_character();
-		if(frameRecieve[i] == 6){
+		frameRecieve[i++] = get_character();
+		if(frameRecieve[i-1] == 6){
 			mode = 1;
+			frame[i-1] = '\0'
+			break;
 		}
-		i++;
 	}while(frameRecieve[i-1] != '\0');
 
 	printf("frame recieve : ");
 	printf("%d",(int)frameRecieve[0]);
 	printf("data : ");
-	for(i = 1; i < framelen; i++){
+	for(i = 1; i < strlen(frameRecieve); i++){
 		printf("%c", frameRecieve[i]);
 	}
 	printf("\n");
